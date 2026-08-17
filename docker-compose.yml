@@ -1,0 +1,108 @@
+# =========================================================================
+# Base compose file. Env-specific overrides live in
+# docker-compose.{dev,staging,prod}.yml
+#
+# `web` is an external network owned by a standalone Traefik container.
+# `internal` is a project-local network for backend<->db/redis traffic.
+# =========================================================================
+
+name: astroloper
+
+networks:
+  web:
+    external: true
+    name: ${TRAEFIK_NETWORK:-web}
+  internal:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  backend_media:
+  backend_static:
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-astroloper}
+      POSTGRES_USER: ${POSTGRES_USER:-astroloper}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-astroloper}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-astroloper} -d ${POSTGRES_DB:-astroloper}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-project.settings.production}
+      DATABASE_URL: postgres://${POSTGRES_USER:-astroloper}:${POSTGRES_PASSWORD:-astroloper}@db:5432/${POSTGRES_DB:-astroloper}
+      REDIS_URL: redis://redis:6379/0
+      SITE_HOST: ${SITE_HOST:-astroloper.localhost}
+      SITE_URL: ${SITE_URL:-https://astroloper.localhost}
+    volumes:
+      - backend_media:/app/media
+      - backend_static:/app/static_collected
+    networks:
+      - internal
+      - web
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${TRAEFIK_NETWORK:-web}
+      - traefik.http.routers.astroloper-backend.rule=Host(`${SITE_HOST:-astroloper.localhost}`) && (PathPrefix(`/admin`) || PathPrefix(`/django-admin`) || PathPrefix(`/api`) || PathPrefix(`/media`) || PathPrefix(`/static`))
+      - traefik.http.routers.astroloper-backend.entrypoints=${TRAEFIK_ENTRYPOINT:-https}
+      - traefik.http.routers.astroloper-backend.tls=${TRAEFIK_TLS:-true}
+      - traefik.http.routers.astroloper-backend.priority=100
+      - traefik.http.services.astroloper-backend.loadbalancer.server.port=8000
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      NODE_ENV: production
+      WAGTAIL_API_URL: http://backend:8000
+      NEXT_PUBLIC_SITE_URL: ${SITE_URL:-https://astroloper.localhost}
+    networks:
+      - internal
+      - web
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${TRAEFIK_NETWORK:-web}
+      - traefik.http.routers.astroloper-frontend.rule=Host(`${SITE_HOST:-astroloper.localhost}`)
+      - traefik.http.routers.astroloper-frontend.entrypoints=${TRAEFIK_ENTRYPOINT:-https}
+      - traefik.http.routers.astroloper-frontend.tls=${TRAEFIK_TLS:-true}
+      - traefik.http.routers.astroloper-frontend.priority=1
+      - traefik.http.services.astroloper-frontend.loadbalancer.server.port=3000

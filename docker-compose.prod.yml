@@ -1,0 +1,15 @@
+# =========================================================================
+# Production overrides.
+# Built images, gunicorn + next start, no bind mounts, higher worker counts.
+# =========================================================================
+
+services:
+  backend:
+    environment:
+      DJANGO_SETTINGS_MODULE: project.settings.production
+    command: gunicorn project.wsgi:application --bind 0.0.0.0:8000 --workers 4 --access-logfile - --error-logfile -
+
+  frontend:
+    command: node server.js
+    environment:
+      NODE_ENV: production

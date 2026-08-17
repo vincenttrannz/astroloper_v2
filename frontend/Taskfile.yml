@@ -1,0 +1,60 @@
+version: "3"
+
+# Sub-taskfile invoked from the root as `task frontend:<name>`.
+# `dir: ./frontend` is set at the include site so commands run from here.
+
+vars:
+  COMPOSE_RUN: docker compose -f ../docker-compose.yml -f ../docker-compose.dev.yml run --rm frontend
+
+tasks:
+  # -----------------------------------------------------------------
+  # Docker-driven (matches how `task dev` runs things)
+  # -----------------------------------------------------------------
+
+  dev:
+    desc: Start Next.js dev server via docker (usually you'll use root `task dev` instead)
+    cmds:
+      - "{{.COMPOSE_RUN}} pnpm dev"
+
+  build:
+    desc: Build the production bundle inside the container
+    cmds:
+      - "{{.COMPOSE_RUN}} pnpm build"
+
+  # -----------------------------------------------------------------
+  # Host-side (needs local pnpm + node)
+  # -----------------------------------------------------------------
+
+  install:
+    desc: Install deps on the host with pnpm
+    cmds:
+      - pnpm install
+
+  add:
+    desc: Add a shadcn/ui component. Usage - task frontend:add -- button card
+    cmds:
+      - pnpm dlx shadcn@latest add {{.CLI_ARGS}}
+
+  # -----------------------------------------------------------------
+  # Quality
+  # -----------------------------------------------------------------
+
+  lint:
+    desc: Run next lint
+    cmds:
+      - "{{.COMPOSE_RUN}} pnpm lint"
+
+  typecheck:
+    desc: Run tsc --noEmit
+    cmds:
+      - "{{.COMPOSE_RUN}} pnpm typecheck"
+
+  fmt:
+    desc: Run prettier --write
+    cmds:
+      - "{{.COMPOSE_RUN}} pnpm format"
+
+  test:
+    desc: Run vitest
+    cmds:
+      - "{{.COMPOSE_RUN}} pnpm test"

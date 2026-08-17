@@ -1,0 +1,154 @@
+version: "3"
+
+# Top-level task runner. Sub-taskfiles for backend, frontend, and provisioning are
+# pulled in via `includes:` so commands are namespaced (e.g. `task backend:migrate`).
+
+dotenv:
+  - .env
+
+vars:
+  COMPOSE: docker compose -f docker-compose.yml -f docker-compose.dev.yml
+  COMPOSE_STAGING: docker compose -f docker-compose.yml -f docker-compose.staging.yml
+  COMPOSE_PROD: docker compose -f docker-compose.yml -f docker-compose.prod.yml
+  SITE_HOST: '{{.SITE_HOST | default "astroloper.localhost"}}'
+  TRAEFIK_NETWORK: '{{.TRAEFIK_NETWORK | default "web"}}'
+
+includes:
+  backend:
+    taskfile: ./backend/Taskfile.yml
+    dir: ./backend
+  frontend:
+    taskfile: ./frontend/Taskfile.yml
+    dir: ./frontend
+  provisioning:
+    taskfile: ./provisioning/Taskfile.yml
+    dir: ./provisioning
+
+tasks:
+  default:
+    desc: List all tasks
+    cmds:
+      - task --list-all
+
+  # -----------------------------------------------------------------
+  # Local host setup
+  # -----------------------------------------------------------------
+
+  hosts:add:
+    desc: Force-add {{.SITE_HOST}} to /etc/hosts (usually unnecessary for *.localhost; useful for terminal tools on some Linux distros)
+    cmds:
+      - |
+        if ! grep -q "{{.SITE_HOST}}" /etc/hosts; then
+          echo "127.0.0.1  {{.SITE_HOST}}" | sudo tee -a /etc/hosts >/dev/null
+          echo "Added {{.SITE_HOST}} to /etc/hosts."
+        else
+          echo "{{.SITE_HOST}} already in /etc/hosts."
+        fi
+
+  # -----------------------------------------------------------------
+  # Traefik / external network
+  # -----------------------------------------------------------------
+
+  traefik:network:
+    desc: Ensure the external Traefik `{{.TRAEFIK_NETWORK}}` docker network exists
+    cmds:
+      - docker network inspect {{.TRAEFIK_NETWORK}} >/dev/null 2>&1 || docker network create {{.TRAEFIK_NETWORK}}
+
+  traefik:check:
+    desc: Verify a Traefik container is running and reachable on the `{{.TRAEFIK_NETWORK}}` network
+    cmds:
+      - |
+        if ! docker network inspect {{.TRAEFIK_NETWORK}} >/dev/null 2>&1; then
+          echo "External network '{{.TRAEFIK_NETWORK}}' does not exist. Run: task traefik:network"; exit 1
+        fi
+        if ! docker ps --format '{{ "{{" }}.Image{{ "}}" }}' | grep -qi traefik; then
+          echo "No traefik container appears to be running. Start your standalone Traefik stack first."
+          exit 1
+        fi
+        echo "OK: '{{.TRAEFIK_NETWORK}}' exists and a traefik container is running."
+
+  # -----------------------------------------------------------------
+  # Environment scaffolding
+  # -----------------------------------------------------------------
+
+  env:
+    desc: Copy every .env.example to .env (does not overwrite existing files)
+    cmds:
+      - test -f .env || cp .env.example .env
+      - test -f backend/.env || cp backend/.env.example backend/.env
+      - test -f frontend/.env || cp frontend/.env.example frontend/.env
+      - echo "Environment files ready. Review them before running task dev."
+
+  # -----------------------------------------------------------------
+  # Compose lifecycle (dev)
+  # -----------------------------------------------------------------
+
+  setup:
+    desc: One-shot local setup - env files, external network, build, migrate, create superuser
+    cmds:
+      - task: env
+      - task: traefik:network
+      - "{{.COMPOSE}} build"
+      - "{{.COMPOSE}} run --rm backend python manage.py migrate --noinput"
+      - "{{.COMPOSE}} run --rm backend python manage.py createsuperuser --noinput || true"
+      - echo "Setup complete. Run task dev to start the stack."
+
+  dev:
+    desc: Start the dev stack (db, redis, backend, frontend) attached
+    cmds:
+      - task: traefik:network
+      - "{{.COMPOSE}} up --build"
+
+  dev:d:
+    desc: Start the dev stack detached
+    cmds:
+      - task: traefik:network
+      - "{{.COMPOSE}} up -d --build"
+
+  down:
+    desc: Stop and remove dev containers (keeps volumes)
+    cmds:
+      - "{{.COMPOSE}} down"
+
+  reset:
+    desc: Stop, remove containers AND named volumes (destroys DB data)
+    prompt: This will delete the local postgres volume. Continue?
+    cmds:
+      - "{{.COMPOSE}} down -v"
+
+  ps:
+    desc: Show status of dev containers
+    cmds:
+      - "{{.COMPOSE}} ps"
+
+  logs:
+    desc: Tail dev logs (use `task logs -- backend` for one service)
+    cmds:
+      - "{{.COMPOSE}} logs -f {{.CLI_ARGS}}"
+
+  build:
+    desc: Build all dev images
+    cmds:
+      - "{{.COMPOSE}} build"
+
+  # -----------------------------------------------------------------
+  # Meta
+  # -----------------------------------------------------------------
+
+  lint:
+    desc: Run backend + frontend linters
+    deps:
+      - backend:lint
+      - frontend:lint
+
+  fmt:
+    desc: Format backend + frontend
+    deps:
+      - backend:fmt
+      - frontend:fmt
+
+  test:
+    desc: Run backend + frontend tests
+    deps:
+      - backend:test
+      - frontend:test

@@ -1,0 +1,82 @@
+version: "3"
+
+# Sub-taskfile invoked from the root as `task provisioning:<name>`.
+# `dir: ./provisioning` is set at the include site so all ansible-playbook /
+# ansible-vault commands run from here.
+#
+# Every task accepts an `env` variable (development|staging|production),
+# defaulting to development.
+
+vars:
+  ENV: '{{.env | default "development"}}'
+
+tasks:
+  # -----------------------------------------------------------------
+  # Playbooks
+  # -----------------------------------------------------------------
+
+  provision:
+    desc: Run playbooks/provision.yml against `{{.ENV}}`
+    cmds:
+      - ansible-playbook -i inventories/{{.ENV}} playbooks/provision.yml {{.CLI_ARGS}}
+
+  deploy:
+    desc: Run playbooks/deploy.yml against `{{.ENV}}`
+    cmds:
+      - ansible-playbook -i inventories/{{.ENV}} playbooks/deploy.yml {{.CLI_ARGS}}
+
+  rollback:
+    desc: Run playbooks/rollback.yml against `{{.ENV}}`
+    cmds:
+      - ansible-playbook -i inventories/{{.ENV}} playbooks/rollback.yml {{.CLI_ARGS}}
+
+  ping:
+    desc: ansible ping against `{{.ENV}}`
+    cmds:
+      - ansible -i inventories/{{.ENV}} all -m ping
+
+  # -----------------------------------------------------------------
+  # Vault management
+  # -----------------------------------------------------------------
+
+  vault:edit:
+    desc: Edit group_vars/{{.ENV}}/vault.yml with ansible-vault
+    cmds:
+      - ansible-vault edit --vault-id {{.ENV}}@vault_passwords/{{.ENV}} group_vars/{{.ENV}}/vault.yml
+
+  vault:view:
+    desc: View group_vars/{{.ENV}}/vault.yml
+    cmds:
+      - ansible-vault view --vault-id {{.ENV}}@vault_passwords/{{.ENV}} group_vars/{{.ENV}}/vault.yml
+
+  vault:encrypt:
+    desc: Encrypt group_vars/{{.ENV}}/vault.yml (only run once, when the file is plaintext)
+    cmds:
+      - ansible-vault encrypt --vault-id {{.ENV}}@vault_passwords/{{.ENV}} group_vars/{{.ENV}}/vault.yml
+
+  vault:decrypt:
+    desc: Decrypt group_vars/{{.ENV}}/vault.yml back to plaintext (dangerous, avoid committing plaintext!)
+    prompt: This writes plaintext secrets to disk. Continue?
+    cmds:
+      - ansible-vault decrypt --vault-id {{.ENV}}@vault_passwords/{{.ENV}} group_vars/{{.ENV}}/vault.yml
+
+  vault:rekey:
+    desc: Change the vault password on group_vars/{{.ENV}}/vault.yml
+    cmds:
+      - ansible-vault rekey --vault-id {{.ENV}}@vault_passwords/{{.ENV}} group_vars/{{.ENV}}/vault.yml
+
+  # -----------------------------------------------------------------
+  # Setup helpers
+  # -----------------------------------------------------------------
+
+  init:
+    desc: Copy vault_passwords/*.example to their real names (skip if they already exist)
+    cmds:
+      - |
+        for env in development staging production; do
+          if [ ! -f "vault_passwords/$env" ]; then
+            cp "vault_passwords/$env.example" "vault_passwords/$env"
+            chmod 600 "vault_passwords/$env"
+            echo "Created vault_passwords/$env - edit it and set a real password."
+          fi
+        done

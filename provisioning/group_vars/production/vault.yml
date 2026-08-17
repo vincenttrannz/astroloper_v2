@@ -1,0 +1,18 @@
+# =========================================================================
+# PRODUCTION secrets.
+#
+# ⚠  ENCRYPT THIS FILE before committing real values:
+#
+#     ansible-vault encrypt \
+#       --vault-id production@vault_passwords/production \
+#       group_vars/production/vault.yml
+# =========================================================================
+
+vault_django_secret_key: REPLACE-ME-PRODUCTION-DJANGO-SECRET-KEY
+vault_postgres_password: REPLACE-ME-PRODUCTION-POSTGRES-PASSWORD
+
+vault_django_superuser_username: admin
+vault_django_superuser_email: admin@example.com
+vault_django_superuser_password: REPLACE-ME-PRODUCTION-ADMIN-PASSWORD
+
+vault_wagtail_preview_secret: REPLACE-ME-PRODUCTION-PREVIEW-SECRET

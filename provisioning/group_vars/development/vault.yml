@@ -1,0 +1,21 @@
+# =========================================================================
+# DEVELOPMENT secrets.
+#
+# ⚠  ENCRYPT THIS FILE before committing real values:
+#
+#     ansible-vault encrypt \
+#       --vault-id development@vault_passwords/development \
+#       group_vars/development/vault.yml
+#
+# The file below is a PLAINTEXT template - the values here are throwaway
+# defaults suitable only for local development on the developer's machine.
+# =========================================================================
+
+vault_django_secret_key: dev-insecure-django-secret-CHANGE-ME
+vault_postgres_password: astroloper-dev
+
+vault_django_superuser_username: admin
+vault_django_superuser_email: admin@localhost
+vault_django_superuser_password: admin
+
+vault_wagtail_preview_secret: dev-preview-secret-CHANGE-ME

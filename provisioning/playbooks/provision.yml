@@ -1,0 +1,21 @@
+---
+# Provision a target host: OS baseline, Docker install, /etc/hosts, Traefik network.
+# Not deploy - see deploy.yml for that.
+#
+# Usage:
+#   ansible-playbook playbooks/provision.yml
+#   ansible-playbook -i inventories/staging playbooks/provision.yml
+#
+# The env-specific vars in group_vars/<env>/{vars,vault}.yml are auto-loaded
+# by Ansible because each inventory places its host(s) in a group named
+# after the environment. The top-level all.yml is loaded explicitly here.
+
+- name: Provision the astroloper stack
+  hosts: all
+  gather_facts: true
+  vars_files:
+    - ../all.yml
+  roles:
+    - role: common
+    - role: docker
+    - role: traefik

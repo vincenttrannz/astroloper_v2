@@ -1,0 +1,18 @@
+# =========================================================================
+# STAGING secrets.
+#
+# ⚠  ENCRYPT THIS FILE before committing real values:
+#
+#     ansible-vault encrypt \
+#       --vault-id staging@vault_passwords/staging \
+#       group_vars/staging/vault.yml
+# =========================================================================
+
+vault_django_secret_key: REPLACE-ME-STAGING-DJANGO-SECRET-KEY
+vault_postgres_password: REPLACE-ME-STAGING-POSTGRES-PASSWORD
+
+vault_django_superuser_username: admin
+vault_django_superuser_email: admin@example.com
+vault_django_superuser_password: REPLACE-ME-STAGING-ADMIN-PASSWORD
+
+vault_wagtail_preview_secret: REPLACE-ME-STAGING-PREVIEW-SECRET

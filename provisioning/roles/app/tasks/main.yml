@@ -1,0 +1,59 @@
+---
+# Deploy the astroloper compose stack for a given environment.
+
+- name: Ensure project root exists
+  ansible.builtin.file:
+    path: "{{ project_root }}"
+    state: directory
+    mode: "0755"
+  when: env_name != 'development'
+  become: true
+
+- name: Render top-level .env for the environment
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ playbook_dir }}/../../.env"
+    mode: "0640"
+  vars:
+    _target_env_path: "{{ playbook_dir }}/../../.env"
+  when: env_name == 'development'
+
+- name: Render backend/.env for the environment
+  ansible.builtin.template:
+    src: backend.env.j2
+    dest: "{{ playbook_dir }}/../../backend/.env"
+    mode: "0640"
+  when: env_name == 'development'
+
+- name: Render frontend/.env for the environment
+  ansible.builtin.template:
+    src: frontend.env.j2
+    dest: "{{ playbook_dir }}/../../frontend/.env"
+    mode: "0640"
+  when: env_name == 'development'
+
+- name: Build and start the compose stack
+  ansible.builtin.shell: |
+    set -euo pipefail
+    docker compose {{ compose_files | map('regex_replace', '^(.*)$', '-f \1') | join(' ') }} \
+      up -d --build
+  args:
+    chdir: "{{ playbook_dir }}/../.."
+    executable: /bin/bash
+  environment:
+    SITE_HOST: "{{ domain }}"
+    SITE_URL: "{{ site_url }}"
+    TRAEFIK_NETWORK: "{{ traefik_network }}"
+    POSTGRES_DB: "{{ postgres_db }}"
+    POSTGRES_USER: "{{ postgres_user }}"
+    POSTGRES_PASSWORD: "{{ postgres_password }}"
+    DJANGO_SETTINGS_MODULE: "{{ django_settings_module }}"
+
+- name: Run Django migrations
+  ansible.builtin.shell: |
+    set -euo pipefail
+    docker compose {{ compose_files | map('regex_replace', '^(.*)$', '-f \1') | join(' ') }} \
+      exec -T backend python manage.py migrate --noinput
+  args:
+    chdir: "{{ playbook_dir }}/../.."
+    executable: /bin/bash

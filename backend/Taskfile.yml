@@ -1,0 +1,81 @@
+version: "3"
+
+# Sub-taskfile invoked from the root as `task backend:<name>`.
+# `dir: ./backend` is set at the include site so all commands run from here.
+
+vars:
+  COMPOSE_RUN: docker compose -f ../docker-compose.yml -f ../docker-compose.dev.yml run --rm backend
+
+tasks:
+  # -----------------------------------------------------------------
+  # Django management commands (via docker compose run)
+  # -----------------------------------------------------------------
+
+  manage:
+    desc: Run any manage.py command inside the backend container. Usage - task backend:manage -- shell_plus
+    cmds:
+      - "{{.COMPOSE_RUN}} python manage.py {{.CLI_ARGS}}"
+
+  migrate:
+    desc: Apply Django migrations
+    cmds:
+      - "{{.COMPOSE_RUN}} python manage.py migrate"
+
+  makemigrations:
+    desc: Generate new migrations (auto-detect)
+    cmds:
+      - "{{.COMPOSE_RUN}} python manage.py makemigrations {{.CLI_ARGS}}"
+
+  showmigrations:
+    desc: Show migration state
+    cmds:
+      - "{{.COMPOSE_RUN}} python manage.py showmigrations"
+
+  createsuperuser:
+    desc: Interactive superuser creation
+    cmds:
+      - "{{.COMPOSE_RUN}} python manage.py createsuperuser"
+
+  shell:
+    desc: Django shell (uses shell_plus if django-extensions is installed)
+    cmds:
+      - "{{.COMPOSE_RUN}} python manage.py shell"
+
+  dbshell:
+    desc: Postgres psql shell inside the backend container
+    cmds:
+      - "{{.COMPOSE_RUN}} python manage.py dbshell"
+
+  # -----------------------------------------------------------------
+  # Local (host) uv-driven workflow (optional; requires uv installed)
+  # -----------------------------------------------------------------
+
+  install:
+    desc: Install dependencies on the host with uv (creates .venv)
+    cmds:
+      - uv sync
+
+  lock:
+    desc: Regenerate uv.lock
+    cmds:
+      - uv lock
+
+  # -----------------------------------------------------------------
+  # Quality
+  # -----------------------------------------------------------------
+
+  lint:
+    desc: Run ruff lint
+    cmds:
+      - "{{.COMPOSE_RUN}} ruff check ."
+
+  fmt:
+    desc: Auto-format with ruff
+    cmds:
+      - "{{.COMPOSE_RUN}} ruff format ."
+      - "{{.COMPOSE_RUN}} ruff check --fix ."
+
+  test:
+    desc: Run backend tests (pytest)
+    cmds:
+      - "{{.COMPOSE_RUN}} pytest {{.CLI_ARGS}}"

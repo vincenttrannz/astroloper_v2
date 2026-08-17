@@ -1,0 +1,56 @@
+---
+# Traefik runs OUTSIDE this project's compose file. This role either:
+#   1. reminds the user their standalone Traefik must be up (dev default), or
+#   2. renders + starts a minimal Traefik compose stack alongside our services
+#      (set `manage_traefik_locally: true` in group_vars/<env>/vars.yml).
+
+- name: Traefik management is disabled in this environment
+  ansible.builtin.debug:
+    msg: >-
+      manage_traefik_locally is false. Make sure a standalone Traefik container
+      is already running on the `{{ traefik_network }}` network. See
+      docs/DEPLOYMENT.md for an example compose file.
+  when: not (manage_traefik_locally | default(false))
+
+- when: manage_traefik_locally | default(false)
+  block:
+    - name: Ensure the Traefik project directory exists
+      ansible.builtin.file:
+        path: "{{ project_root }}/traefik"
+        state: directory
+        mode: "0755"
+
+    - name: Render Traefik compose file
+      ansible.builtin.copy:
+        dest: "{{ project_root }}/traefik/docker-compose.yml"
+        mode: "0644"
+        content: |
+          name: traefik
+          networks:
+            web:
+              name: {{ traefik_network }}
+              external: true
+          services:
+            traefik:
+              image: traefik:v3
+              restart: unless-stopped
+              command:
+                - --api.dashboard=true
+                - --providers.docker=true
+                - --providers.docker.exposedbydefault=false
+                - --entrypoints.web.address=:80
+                - --entrypoints.web.http.redirections.entrypoint.to=websecure
+                - --entrypoints.web.http.redirections.entrypoint.scheme=https
+                - --entrypoints.websecure.address=:443
+              ports:
+                - "80:80"
+                - "443:443"
+              volumes:
+                - /var/run/docker.sock:/var/run/docker.sock:ro
+              networks:
+                - web
+
+    - name: Bring up the Traefik stack
+      ansible.builtin.command: docker compose up -d
+      args:
+        chdir: "{{ project_root }}/traefik"

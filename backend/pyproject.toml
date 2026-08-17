@@ -1,0 +1,44 @@
+[project]
+name = "astroloper-backend"
+version = "0.1.0"
+description = "Astroloper v2 headless Wagtail + Django backend"
+requires-python = ">=3.12,<3.14"
+readme = "../README.md"
+
+dependencies = [
+    "django>=5.2,<6.0",
+    "wagtail>=7.4,<7.5",
+    "wagtail-headless-preview>=0.9",
+    "djangorestframework>=3.15",
+    "django-cors-headers>=4.4",
+    "django-environ>=0.11",
+    "dj-database-url>=2.2",
+    "psycopg[binary]>=3.2",
+    "redis>=5.0",
+    "django-redis>=5.4",
+    "whitenoise>=6.7",
+    "gunicorn>=23.0",
+    "Pillow>=10.4",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.6",
+    "django-debug-toolbar>=4.4",
+    "pytest>=8.3",
+    "pytest-django>=4.9",
+    "watchfiles>=0.24",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = ["migrations", ".venv", "static_collected"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "project.settings.dev"
+python_files = ["test_*.py", "tests.py"]

@@ -1,0 +1,62 @@
+---
+# Install Docker Engine + compose plugin on Linux hosts.
+# On macOS we assume Docker Desktop is already installed.
+
+- name: Check docker binary
+  ansible.builtin.command: docker --version
+  register: _docker_check
+  ignore_errors: true
+  changed_when: false
+
+- name: Skip docker install (already present)
+  ansible.builtin.debug:
+    msg: "docker already installed: {{ _docker_check.stdout }}"
+  when: _docker_check.rc == 0
+
+- when:
+    - _docker_check.rc != 0
+    - ansible_facts['os_family'] == 'Debian'
+  become: true
+  block:
+    - name: Add Docker GPG key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+        force: false
+
+    - name: Add Docker apt repository
+      ansible.builtin.apt_repository:
+        repo: >-
+          deb [arch={{ ansible_facts['architecture'] | replace('x86_64','amd64') | replace('aarch64','arm64') }}
+          signed-by=/etc/apt/keyrings/docker.asc]
+          https://download.docker.com/linux/{{ ansible_distribution | lower }}
+          {{ ansible_distribution_release }} stable
+        state: present
+        update_cache: true
+
+    - name: Install docker + compose plugin
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: Ensure docker service is enabled and running
+      ansible.builtin.systemd:
+        name: docker
+        enabled: true
+        state: started
+
+- name: Ensure the external Traefik network `{{ traefik_network }}` exists
+  ansible.builtin.command: docker network inspect {{ traefik_network }}
+  register: _net_check
+  ignore_errors: true
+  changed_when: false
+
+- name: Create the external Traefik network
+  ansible.builtin.command: docker network create {{ traefik_network }}
+  when: _net_check.rc != 0

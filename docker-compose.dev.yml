@@ -1,0 +1,34 @@
+# =========================================================================
+# Dev overrides:
+#   - bind mount source for hot reload
+#   - use Dockerfile.dev (runserver / next dev)
+#   - default DJANGO_SETTINGS_MODULE to project.settings.dev
+#   - no host port publishing; everything reachable via Traefik on
+#     https://${SITE_HOST}
+# =========================================================================
+
+services:
+  backend:
+    build:
+      dockerfile: docker/Dockerfile.dev
+    command: python manage.py runserver 0.0.0.0:8000
+    environment:
+      DJANGO_SETTINGS_MODULE: project.settings.dev
+      DJANGO_DEBUG: "1"
+    volumes:
+      - ./backend:/app
+      - backend_media:/app/media
+      - backend_static:/app/static_collected
+
+  frontend:
+    build:
+      dockerfile: docker/Dockerfile.dev
+    command: pnpm dev
+    environment:
+      NODE_ENV: development
+      WAGTAIL_API_URL: http://backend:8000
+      NEXT_PUBLIC_SITE_URL: ${SITE_URL:-https://astroloper.localhost}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next

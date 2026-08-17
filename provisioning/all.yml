@@ -1,0 +1,36 @@
+# =========================================================================
+# Shared variables/credentials applied to ALL environments.
+#
+# This file is loaded by every playbook via `vars_files:` so its values are
+# available regardless of which inventory you point at.
+#
+# Environment-specific values live in group_vars/<env>/{vars,vault}.yml and
+# override anything defined here.
+#
+# NOTE: This file is PLAINTEXT. Do not put real secrets here - put them in
+#       group_vars/<env>/vault.yml (which is ansible-vault encrypted).
+# =========================================================================
+
+# --- Project identity ---
+project_name: astroloper
+project_repo: https://github.com/your-org/astroloper_v2
+project_root: /opt/astroloper
+
+# --- Docker + Traefik ---
+traefik_network: web
+docker_compose_project_name: "{{ project_name }}"
+
+# --- Image tags (pinned per environment via group_vars) ---
+backend_image_tag: latest
+frontend_image_tag: latest
+
+# --- Component versions (used by roles/common where relevant) ---
+python_version: "3.13"
+node_version: "22"
+postgres_version: "16"
+redis_version: "7"
+
+# --- Compose file selection (overridden per env by group_vars) ---
+compose_files:
+  - docker-compose.yml
+  - docker-compose.dev.yml

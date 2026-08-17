@@ -1,0 +1,28 @@
+# =========================================================================
+# Production non-secret variables.
+# =========================================================================
+
+env_name: production
+domain: example.com          # TODO: replace with your real production domain
+site_url: "https://{{ domain }}"
+
+compose_files:
+  - docker-compose.yml
+  - docker-compose.prod.yml
+
+django_settings_module: project.settings.production
+django_debug: false
+
+django_secret_key: "{{ vault_django_secret_key }}"
+
+postgres_db: astroloper
+postgres_user: astroloper
+postgres_password: "{{ vault_postgres_password }}"
+
+django_superuser_username: "{{ vault_django_superuser_username }}"
+django_superuser_email: "{{ vault_django_superuser_email }}"
+django_superuser_password: "{{ vault_django_superuser_password }}"
+
+wagtail_preview_secret: "{{ vault_wagtail_preview_secret }}"
+
+manage_traefik_locally: false

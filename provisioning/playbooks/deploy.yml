@@ -1,0 +1,25 @@
+---
+# Deploy the astroloper stack.
+#
+# Usage:
+#   ansible-playbook playbooks/deploy.yml
+#   ansible-playbook -i inventories/staging playbooks/deploy.yml
+
+- name: Deploy the astroloper stack
+  hosts: all
+  gather_facts: true
+  vars_files:
+    - ../all.yml
+  tasks:
+    - name: Ensure the external Traefik network `{{ traefik_network }}` exists
+      ansible.builtin.command: docker network inspect {{ traefik_network }}
+      register: _net_check
+      ignore_errors: true
+      changed_when: false
+
+    - name: Create the external Traefik network
+      ansible.builtin.command: docker network create {{ traefik_network }}
+      when: _net_check.rc != 0
+
+  roles:
+    - role: app

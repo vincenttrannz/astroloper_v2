@@ -1,0 +1,15 @@
+node_modules/
+.next/
+out/
+.pnpm-store/
+.turbo/
+coverage/
+.env
+.env.*
+!.env.example
+.git/
+.gitignore
+Dockerfile*
+docker/
+.DS_Store
+*.log

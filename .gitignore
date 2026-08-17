@@ -1,0 +1,58 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.env
+.env.*
+!.env.example
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# --- Node / Next.js ---
+node_modules/
+.next/
+out/
+.pnpm-store/
+.turbo/
+next-env.d.ts
+
+# --- Django / Wagtail ---
+*.log
+db.sqlite3
+db.sqlite3-journal
+/backend/media/
+/backend/staticfiles/
+/backend/static_collected/
+
+# --- Docker ---
+.docker/
+
+# --- Ansible / Vault ---
+provisioning/vault_passwords/*
+!provisioning/vault_passwords/*.example
+!provisioning/vault_passwords/.gitkeep
+*.retry
+
+# --- Editors / OS ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/settings.json.example
+!.vscode/extensions.json
+*.swp
+*.swo
+
+# --- Misc ---
+.task/

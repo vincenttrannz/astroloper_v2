@@ -1,0 +1,24 @@
+# syntax=docker/dockerfile:1.7
+
+# -------------------------------------------------------------------------
+# Development Next.js image. Source is bind-mounted; this image only needs
+# node + pnpm + the installed deps.
+# -------------------------------------------------------------------------
+
+ARG NODE_VERSION=22
+
+FROM node:${NODE_VERSION}-alpine
+
+RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
+
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml* ./
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile 2>/dev/null || pnpm install
+
+EXPOSE 3000
+
+ENV NEXT_TELEMETRY_DISABLED=1
+
+CMD ["pnpm", "dev"]

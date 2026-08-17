@@ -1,0 +1,24 @@
+---
+# Rollback to a previously-tagged image set.
+# Pass `-e backend_image_tag=<sha>` and/or `-e frontend_image_tag=<sha>`
+# to select the target tags. The value comes from group_vars by default.
+#
+# Usage:
+#   ansible-playbook playbooks/rollback.yml \
+#     -e backend_image_tag=abc123 -e frontend_image_tag=def456
+
+- name: Rollback the astroloper stack
+  hosts: all
+  gather_facts: true
+  vars_files:
+    - ../all.yml
+  tasks:
+    - name: Show target tags
+      ansible.builtin.debug:
+        msg: |
+          Rolling back to:
+            backend={{ backend_image_tag }}
+            frontend={{ frontend_image_tag }}
+
+  roles:
+    - role: app

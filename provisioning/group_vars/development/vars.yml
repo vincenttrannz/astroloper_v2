@@ -1,0 +1,37 @@
+# =========================================================================
+# Development non-secret variables.
+# Secrets go in vault.yml (ansible-vault encrypted) and are referenced
+# here via the `vault_` prefix convention.
+# =========================================================================
+
+env_name: development
+domain: astroloper.localhost
+site_url: "https://{{ domain }}"
+
+# Compose overrides for this env
+compose_files:
+  - docker-compose.yml
+  - docker-compose.dev.yml
+
+# Django
+django_settings_module: project.settings.dev
+django_debug: true
+
+# --- Secret indirection (values live in vault.yml) ---
+django_secret_key: "{{ vault_django_secret_key }}"
+
+# Postgres
+postgres_db: astroloper
+postgres_user: astroloper
+postgres_password: "{{ vault_postgres_password }}"
+
+# Bootstrap admin
+django_superuser_username: "{{ vault_django_superuser_username }}"
+django_superuser_email: "{{ vault_django_superuser_email }}"
+django_superuser_password: "{{ vault_django_superuser_password }}"
+
+# Wagtail preview shared secret with the Next.js /api/preview route
+wagtail_preview_secret: "{{ vault_wagtail_preview_secret }}"
+
+# Traefik
+manage_traefik_locally: false
