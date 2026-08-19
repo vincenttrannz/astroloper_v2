@@ -1,18 +1,18 @@
-import { PostCard, pageToPostCard } from "@/components/blog/PostCard";
+import { ProjectCard, pageToProjectCard } from "@/components/projects/ProjectCard";
 import { RichText } from "@/components/media/RichText";
 import { StreamFieldRenderer } from "@/components/streamfield/StreamField";
 import { listPages, type WagtailPage } from "@/lib/wagtail";
 
-type BlogIndexData = WagtailPage<{
+type ProjectIndexData = WagtailPage<{
   body_intro?: string;
   intro?: unknown[];
 }>;
 
-export async function BlogIndexPage({ page }: { page: WagtailPage }) {
-  const data = page as BlogIndexData;
+export async function ProjectIndexPage({ page }: { page: WagtailPage }) {
+  const data = page as ProjectIndexData;
   const children = await listPages({
     child_of: page.id,
-    type: "models.BlogPage",
+    type: "models.ProjectPage",
     limit: 24,
     order: "-first_published_at",
   });
@@ -36,11 +36,11 @@ export async function BlogIndexPage({ page }: { page: WagtailPage }) {
 
       <section className="container pb-16">
         {children.items.length === 0 ? (
-          <p className="text-muted-foreground">No posts yet.</p>
+          <p className="text-muted-foreground">No projects yet.</p>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {children.items.map((child) => (
-              <PostCard key={child.id} post={pageToPostCard(child)} />
+              <ProjectCard key={child.id} project={pageToProjectCard(child)} />
             ))}
           </div>
         )}

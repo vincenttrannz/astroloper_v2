@@ -11,10 +11,12 @@ from models.streamfield.blocks import (
     RichTextBlock,
     content_blocks,
 )
+from models.streamfield.callout import CalloutBlock
 from models.streamfield.hero import HeroBlock
 from models.streamfield.layout import ColumnsBlock
 
 __all__ = [
+    "CalloutBlock",
     "ColumnsBlock",
     "HeroBlock",
     "ImageBlock",

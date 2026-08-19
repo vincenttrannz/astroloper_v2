@@ -5,6 +5,7 @@ from __future__ import annotations
 from wagtail import blocks
 
 from models.api.images import APIImageChooserBlock
+from models.streamfield.callout import CalloutBlock
 
 
 class RichTextBlock(blocks.RichTextBlock):
@@ -37,4 +38,5 @@ content_blocks: list[tuple[str, blocks.Block]] = [
     ("rich_text", RichTextBlock()),
     ("image", ImageBlock()),
     ("quote", QuoteBlock()),
+    ("callout", CalloutBlock()),
 ]

@@ -26,6 +26,7 @@ const blockRegistry: Record<string, BlockComponent> = {
   rich_text: RichTextBlock,
   image: ImageBlock,
   quote: QuoteBlock,
+  callout: CalloutBlock,
   hero: HeroBlock,
   columns: ColumnsBlock,
 };
@@ -57,6 +58,13 @@ type ImageBlockValue = {
 type QuoteBlockValue = {
   quote?: string;
   attribution?: string;
+};
+
+type CalloutVariant = "success" | "info" | "warning";
+type CalloutBlockValue = {
+  label?: string;
+  body?: string;
+  variant?: CalloutVariant;
 };
 
 type HeroBlockValue = {
@@ -108,6 +116,38 @@ function QuoteBlock({ value }: { value: QuoteBlockValue }) {
         </cite>
       )}
     </blockquote>
+  );
+}
+
+const CALLOUT_STYLES: Record<CalloutVariant, { wrap: string; label: string }> = {
+  success: {
+    wrap: "border-emerald-500 bg-emerald-50/70",
+    label: "text-emerald-700",
+  },
+  info: {
+    wrap: "border-blue-500 bg-blue-50/70",
+    label: "text-blue-700",
+  },
+  warning: {
+    wrap: "border-amber-500 bg-amber-50/70",
+    label: "text-amber-700",
+  },
+};
+
+function CalloutBlock({ value }: { value: CalloutBlockValue }) {
+  const styles = CALLOUT_STYLES[value.variant ?? "success"];
+  return (
+    <aside
+      className={`rounded-r-md border-l-4 px-5 py-4 not-prose ${styles.wrap}`}
+      role="note"
+    >
+      {value.label && (
+        <p className={`text-sm font-semibold ${styles.label}`}>{value.label}</p>
+      )}
+      {value.body && (
+        <p className="mt-1 text-sm text-neutral-700 whitespace-pre-line">{value.body}</p>
+      )}
+    </aside>
   );
 }
 

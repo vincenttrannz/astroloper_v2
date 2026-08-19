@@ -51,6 +51,16 @@ export type WagtailImage = {
   } & Record<string, WagtailRendition>;
 };
 
+export type WagtailPageRef = {
+  id: number;
+  title: string;
+  meta: {
+    type: string;
+    detail_url: string;
+    html_url: string | null;
+  };
+};
+
 export type WagtailMeta = {
   type: string;
   detail_url: string;
@@ -58,6 +68,7 @@ export type WagtailMeta = {
   slug: string;
   first_published_at: string | null;
   locale?: string;
+  parent?: WagtailPageRef | null;
 };
 
 export type WagtailPage<TExtra = Record<string, unknown>> = TExtra & {
@@ -159,7 +170,13 @@ export async function findPageByPath(
 
 /** Fetch the child pages of a given parent id (or the root if omitted). */
 export async function listPages(
-  params: { type?: string; child_of?: number | string; limit?: number; offset?: number } = {},
+  params: {
+    type?: string;
+    child_of?: number | string;
+    limit?: number;
+    offset?: number;
+    order?: string;
+  } = {},
   opts: FetchOpts = {},
 ): Promise<WagtailPageList> {
   const query = new URLSearchParams({ fields: "*" });
