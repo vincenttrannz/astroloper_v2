@@ -14,8 +14,8 @@ type BlogPageData = WagtailPage<{
   date?: string;
   reading_time?: number;
   body_intro?: string;
-  hero?: unknown[];
   body?: unknown[];
+  tag_names?: string[];
 }>;
 
 const publishedFmt = new Intl.DateTimeFormat("en-US", {
@@ -79,6 +79,19 @@ export function BlogPage({ page }: { page: WagtailPage }) {
             )}
             {published && <span>Published {published}</span>}
           </div>
+        )}
+
+        {data.tag_names && data.tag_names.length > 0 && (
+          <ul className="mt-12 flex flex-wrap gap-2">
+            {data.tag_names.map((tag) => (
+              <li
+                key={tag}
+                className="rounded-md border border-emerald-500/40 px-2 py-0.5 text-xs font-medium text-emerald-600"
+              >
+                #{tag}
+              </li>
+            ))}
+          </ul>
         )}
       </header>
 

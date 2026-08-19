@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from django.db import models
 from django.utils.html import strip_tags
-from modelcluster.fields import ParentalManyToManyField
+from modelcluster.contrib.taggit import ClusterTaggableManager
+from modelcluster.fields import ParentalKey
+from taggit.models import TaggedItemBase
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
 from wagtail.api import APIField
 from wagtail.fields import StreamField
@@ -14,9 +16,27 @@ from wagtail_headless_preview.models import HeadlessPreviewMixin
 
 from models.api.snippets import NamedSnippetField
 from models.mixins.seo import SEOMixin
-from models.streamfield import ColumnsBlock, HeroBlock, RichTextBlock, content_blocks
+from models.streamfield import ColumnsBlock, RichTextBlock, content_blocks
 
 WORDS_PER_MINUTE = 200
+
+
+class BlogPageTag(TaggedItemBase):
+    """Through-model connecting BlogPages to taggit ``Tag`` rows.
+
+    Using ``TaggedItemBase`` (from django-taggit) gives us the idiomatic
+    Wagtail tag input in the admin: a comma-separated text field with
+    autocomplete off existing tags.
+    """
+
+    content_object = ParentalKey(
+        "BlogPage",
+        on_delete=models.CASCADE,
+        related_name="tagged_items",
+    )
+
+    class Meta:
+        app_label = "models"
 
 
 class BlogIndexPage(HeadlessPreviewMixin, SEOMixin, Page):
@@ -72,13 +92,7 @@ class BlogPage(HeadlessPreviewMixin, SEOMixin, Page):
         on_delete=models.SET_NULL,
         related_name="+",
     )
-    tags = ParentalManyToManyField("models.Tag", blank=True, related_name="+")
-    hero = StreamField(
-        [("hero", HeroBlock())],
-        blank=True,
-        max_num=1,
-        use_json_field=True,
-    )
+    tags = ClusterTaggableManager(through=BlogPageTag, blank=True)
     body = StreamField(
         [*content_blocks, ("columns", ColumnsBlock())],
         blank=True,
@@ -96,7 +110,6 @@ class BlogPage(HeadlessPreviewMixin, SEOMixin, Page):
             heading="Metadata",
         ),
         FieldPanel("body_intro"),
-        FieldPanel("hero"),
         FieldPanel("body"),
     ]
 
@@ -106,6 +119,11 @@ class BlogPage(HeadlessPreviewMixin, SEOMixin, Page):
     ]
 
     # ---- Derived API fields ----
+
+    @property
+    def tag_names(self) -> list[str]:
+        """Tag names as a plain list of strings, ready to render as pills."""
+        return list(self.tags.order_by("name").values_list("name", flat=True))
 
     @property
     def excerpt(self) -> str:
@@ -131,8 +149,7 @@ class BlogPage(HeadlessPreviewMixin, SEOMixin, Page):
         APIField("category", serializer=NamedSnippetField()),
         APIField("date"),
         APIField("author", serializer=NamedSnippetField()),
-        APIField("tags"),
-        APIField("hero"),
+        APIField("tag_names"),
         APIField("body"),
         APIField("excerpt"),
         APIField("reading_time"),

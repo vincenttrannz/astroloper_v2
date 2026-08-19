@@ -7,7 +7,6 @@ from wagtail.snippets.views.snippets import SnippetViewSet
 
 from models.snippets.author import Author
 from models.snippets.category import Category
-from models.snippets.tag import Tag
 
 
 class AuthorViewSet(SnippetViewSet):
@@ -17,15 +16,6 @@ class AuthorViewSet(SnippetViewSet):
     menu_order = 200
     list_display = ("name", "email")
     search_fields = ("name", "email")
-
-
-class TagViewSet(SnippetViewSet):
-    model = Tag
-    icon = "tag"
-    menu_label = "Tags"
-    menu_order = 210
-    list_display = ("name", "slug")
-    search_fields = ("name", "slug")
 
 
 class CategoryViewSet(SnippetViewSet):
@@ -38,5 +28,4 @@ class CategoryViewSet(SnippetViewSet):
 
 
 register_snippet(AuthorViewSet)
-register_snippet(TagViewSet)
 register_snippet(CategoryViewSet)

@@ -10,7 +10,7 @@ Abstract mixins in ``models/mixins/`` do NOT belong here (they have
 ``Meta.abstract = True`` and Django ignores them for migrations).
 """
 
-from models.pages.blog import BlogIndexPage, BlogPage
+from models.pages.blog import BlogIndexPage, BlogPage, BlogPageTag
 from models.pages.home import HomePage
 from models.pages.project import (
     ProjectIndexPage,
@@ -22,12 +22,12 @@ from models.settings.menus import FooterMenu, MainMenu
 from models.settings.site import SiteSettings
 from models.snippets.author import Author
 from models.snippets.category import Category
-from models.snippets.tag import Tag
 
 __all__ = [
     "Author",
     "BlogIndexPage",
     "BlogPage",
+    "BlogPageTag",
     "Category",
     "FooterMenu",
     "HomePage",
@@ -37,5 +37,4 @@ __all__ = [
     "ProjectPageKeyFeature",
     "ProjectPageTechnology",
     "SiteSettings",
-    "Tag",
 ]
