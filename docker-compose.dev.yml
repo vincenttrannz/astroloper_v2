@@ -23,7 +23,7 @@ services:
   frontend:
     build:
       dockerfile: docker/Dockerfile.dev
-    command: pnpm dev
+    command: npm run dev
     environment:
       NODE_ENV: development
       WAGTAIL_API_URL: http://backend:8000

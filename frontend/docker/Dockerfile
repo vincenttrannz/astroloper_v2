@@ -7,21 +7,20 @@
 ARG NODE_VERSION=22
 
 FROM node:${NODE_VERSION}-alpine AS base
-RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
 WORKDIR /app
 
 # ---------- deps ----------
 FROM base AS deps
-COPY package.json pnpm-lock.yaml* ./
-RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile 2>/dev/null || pnpm install
+COPY package.json package-lock.json* ./
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci 2>/dev/null || npm install
 
 # ---------- builder ----------
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN pnpm build
+RUN npm run build
 
 # ---------- runtime ----------
 FROM node:${NODE_VERSION}-alpine AS runtime

@@ -17,7 +17,7 @@ Prerequisites:
 - Docker Desktop (or Docker Engine + compose plugin)
 - [Task](https://taskfile.dev/installation/) (`brew install go-task/tap/go-task`)
 - A running Traefik container that owns the external `web` Docker network with a TLS-terminating entrypoint on port 443 (see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)).
-- Optional: [uv](https://docs.astral.sh/uv/) and [pnpm](https://pnpm.io) if you want to run backend/frontend outside Docker.
+- Optional: [uv](https://docs.astral.sh/uv/) and Node.js 22 with npm if you want to run backend/frontend outside Docker.
 
 ```bash
 cp .env.example .env

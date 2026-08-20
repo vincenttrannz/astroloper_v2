@@ -14,26 +14,26 @@ tasks:
   dev:
     desc: Start Next.js dev server via docker (usually you'll use root `task dev` instead)
     cmds:
-      - "{{.COMPOSE_RUN}} pnpm dev"
+      - "{{.COMPOSE_RUN}} npm run dev"
 
   build:
     desc: Build the production bundle inside the container
     cmds:
-      - "{{.COMPOSE_RUN}} pnpm build"
+      - "{{.COMPOSE_RUN}} npm run build"
 
   # -----------------------------------------------------------------
-  # Host-side (needs local pnpm + node)
+  # Host-side (needs local node + npm)
   # -----------------------------------------------------------------
 
   install:
-    desc: Install deps on the host with pnpm
+    desc: Install deps on the host with npm
     cmds:
-      - pnpm install
+      - npm install
 
   add:
     desc: Add a shadcn/ui component. Usage - task frontend:add -- button card
     cmds:
-      - pnpm dlx shadcn@latest add {{.CLI_ARGS}}
+      - npx shadcn@latest add {{.CLI_ARGS}}
 
   # -----------------------------------------------------------------
   # Quality
@@ -42,19 +42,19 @@ tasks:
   lint:
     desc: Run next lint
     cmds:
-      - "{{.COMPOSE_RUN}} pnpm lint"
+      - "{{.COMPOSE_RUN}} npm run lint"
 
   typecheck:
     desc: Run tsc --noEmit
     cmds:
-      - "{{.COMPOSE_RUN}} pnpm typecheck"
+      - "{{.COMPOSE_RUN}} npm run typecheck"
 
   fmt:
     desc: Run prettier --write
     cmds:
-      - "{{.COMPOSE_RUN}} pnpm format"
+      - "{{.COMPOSE_RUN}} npm run format"
 
   test:
     desc: Run vitest
     cmds:
-      - "{{.COMPOSE_RUN}} pnpm test"
+      - "{{.COMPOSE_RUN}} npm test"
