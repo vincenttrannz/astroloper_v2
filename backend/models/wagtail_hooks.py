@@ -7,6 +7,7 @@ from wagtail.snippets.views.snippets import SnippetViewSet
 
 from models.snippets.author import Author
 from models.snippets.category import Category
+from models.snippets.contact_submission import ContactSubmission
 
 
 class AuthorViewSet(SnippetViewSet):
@@ -27,5 +28,16 @@ class CategoryViewSet(SnippetViewSet):
     search_fields = ("name", "slug")
 
 
+class ContactSubmissionViewSet(SnippetViewSet):
+    model = ContactSubmission
+    icon = "mail"
+    menu_label = "Contact submissions"
+    menu_order = 300
+    list_display = ("name", "email", "subject", "created_at")
+    search_fields = ("name", "email", "subject", "message")
+    add_to_admin_menu = True
+
+
 register_snippet(AuthorViewSet)
 register_snippet(CategoryViewSet)
+register_snippet(ContactSubmissionViewSet)

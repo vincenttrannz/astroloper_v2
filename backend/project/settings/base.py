@@ -27,6 +27,16 @@ env = environ.Env(
     WAGTAILADMIN_BASE_URL=(str, "https://astroloper.localhost"),
     DATABASE_URL=(str, "postgres://astroloper:astroloper@db:5432/astroloper"),
     REDIS_URL=(str, "redis://redis:6379/0"),
+    AGENT_URL=(str, ""),
+    AGENT_API_KEY=(str, ""),
+    CONTACT_TO_EMAIL=(str, "hello@astroloper.localhost"),
+    DEFAULT_FROM_EMAIL=(str, "no-reply@astroloper.localhost"),
+    EMAIL_HOST=(str, "mailpit"),
+    EMAIL_PORT=(int, 1025),
+    EMAIL_USE_TLS=(bool, False),
+    EMAIL_USE_SSL=(bool, False),
+    EMAIL_HOST_USER=(str, ""),
+    EMAIL_HOST_PASSWORD=(str, ""),
 )
 
 # Read .env if present (dev convenience; ignored when compose provides env).
@@ -201,6 +211,25 @@ WAGTAILSEARCH_BACKENDS = {
 # MP_NodeManager, but the check inspects direct bases and doesn't see it.
 # This is an upstream Wagtail issue to be fixed before Treebeard 6 makes it fatal.
 SILENCED_SYSTEM_CHECKS = ["treebeard.E001"]
+
+# -------------------------------------------------------------------------
+# Contact form + AI agent chat proxy
+# -------------------------------------------------------------------------
+
+AGENT_URL = env("AGENT_URL")
+AGENT_API_KEY = env("AGENT_API_KEY")
+CONTACT_TO_EMAIL = env("CONTACT_TO_EMAIL")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
+
+# SMTP transport. Dev compose points these at the Mailpit container;
+# staging/prod override via Ansible-managed env vars to hit a real
+# relay (e.g. Resend on smtp.resend.com:587 + STARTTLS).
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_PORT = env("EMAIL_PORT")
+EMAIL_USE_TLS = env("EMAIL_USE_TLS")
+EMAIL_USE_SSL = env("EMAIL_USE_SSL")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 
 # -------------------------------------------------------------------------
 # CORS (frontend runs on same origin behind Traefik, but keep open in dev)

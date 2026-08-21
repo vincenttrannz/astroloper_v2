@@ -132,6 +132,20 @@ tasks:
       - "{{.COMPOSE}} build"
 
   # -----------------------------------------------------------------
+  # Mailpit (dev SMTP inbox)
+  # -----------------------------------------------------------------
+
+  mail:open:
+    desc: Open the Mailpit inbox in a browser
+    cmds:
+      - open https://mailpit.{{.SITE_HOST}} 2>/dev/null || xdg-open https://mailpit.{{.SITE_HOST}}
+
+  mail:logs:
+    desc: Tail Mailpit logs
+    cmds:
+      - "{{.COMPOSE}} logs -f mailpit"
+
+  # -----------------------------------------------------------------
   # Meta
   # -----------------------------------------------------------------
 

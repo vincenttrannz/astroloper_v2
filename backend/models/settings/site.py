@@ -37,6 +37,7 @@ class SiteSettings(BaseSiteSetting):
     )
 
     twitter_url = models.URLField(blank=True)
+    facebook_url = models.URLField(blank=True)
     github_url = models.URLField(blank=True)
     linkedin_url = models.URLField(blank=True)
 
@@ -52,6 +53,7 @@ class SiteSettings(BaseSiteSetting):
         MultiFieldPanel(
             [
                 FieldPanel("twitter_url"),
+                FieldPanel("facebook_url"),
                 FieldPanel("github_url"),
                 FieldPanel("linkedin_url"),
             ],
@@ -65,6 +67,7 @@ class SiteSettings(BaseSiteSetting):
         APIField("logo"),
         APIField("favicon"),
         APIField("twitter_url"),
+        APIField("facebook_url"),
         APIField("github_url"),
         APIField("linkedin_url"),
     ]

@@ -12,6 +12,7 @@ import type { WagtailPage } from "@/lib/wagtail";
 
 import { BlogIndexPage } from "./BlogIndexPage";
 import { BlogPage } from "./BlogPage";
+import { ContactPage } from "./ContactPage";
 import { HomePage } from "./HomePage";
 import { ProjectIndexPage } from "./ProjectIndexPage";
 import { ProjectPage } from "./ProjectPage";
@@ -23,6 +24,7 @@ const registry: Record<string, React.FC<{ page: WagtailPage }>> = {
   "models.BlogPage": BlogPage,
   "models.ProjectIndexPage": ProjectIndexPage,
   "models.ProjectPage": ProjectPage,
+  "models.ContactPage": ContactPage,
 };
 
 export function renderPage(page: WagtailPage) {

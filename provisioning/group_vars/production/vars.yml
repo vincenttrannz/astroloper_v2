@@ -25,4 +25,22 @@ django_superuser_password: "{{ vault_django_superuser_password }}"
 
 wagtail_preview_secret: "{{ vault_wagtail_preview_secret }}"
 
+# --- Transactional email (Resend SMTP relay) ---
+# Add DNS records + verify the sending domain in the Resend dashboard
+# before enabling. Port 587 uses STARTTLS; switch to 465 with
+# email_use_ssl=true if a firewall blocks 587.
+email_host: smtp.resend.com
+email_port: 587
+email_use_tls: true
+email_use_ssl: false
+email_host_user: resend
+email_host_password: "{{ vault_resend_api_key }}"
+default_from_email: "no-reply@{{ domain }}"
+contact_to_email: "hello@{{ domain }}"
+
+# --- AI agent proxy (Contact page /api/v2/agent/) ---
+# Leave blank to keep the endpoint returning mock replies.
+agent_url: ""
+agent_api_key: "{{ vault_agent_api_key | default('') }}"
+
 manage_traefik_locally: false

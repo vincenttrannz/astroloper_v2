@@ -11,6 +11,7 @@ Abstract mixins in ``models/mixins/`` do NOT belong here (they have
 """
 
 from models.pages.blog import BlogIndexPage, BlogPage, BlogPageTag
+from models.pages.contact import ContactPage
 from models.pages.home import HomePage
 from models.pages.project import (
     ProjectIndexPage,
@@ -22,6 +23,7 @@ from models.settings.menus import FooterMenu, MainMenu
 from models.settings.site import SiteSettings
 from models.snippets.author import Author
 from models.snippets.category import Category
+from models.snippets.contact_submission import ContactSubmission
 
 __all__ = [
     "Author",
@@ -29,6 +31,8 @@ __all__ = [
     "BlogPage",
     "BlogPageTag",
     "Category",
+    "ContactPage",
+    "ContactSubmission",
     "FooterMenu",
     "HomePage",
     "MainMenu",

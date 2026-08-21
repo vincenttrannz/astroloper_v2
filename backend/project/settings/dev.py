@@ -11,8 +11,9 @@ SECRET_KEY = "django-insecure-dev-key-do-not-use-in-prod"  # noqa: S105
 ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = [SITE_URL, "http://localhost:8000", "http://127.0.0.1:8000"]
 
-# Email to console during dev
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# Email is captured by the Mailpit container in dev compose. Host / port
+# come from EMAIL_HOST / EMAIL_PORT in base.py (defaults: mailpit:1025).
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
 # Django Debug Toolbar (optional, only loaded if installed)
 try:

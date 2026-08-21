@@ -159,7 +159,11 @@ class HomePage(HeadlessPreviewMixin, SEOMixin, Page):
     ]
 
     parent_page_types: list[str] = ["wagtailcore.Page"]
-    subpage_types: list[str] = ["models.BlogIndexPage", "models.ProjectIndexPage"]
+    subpage_types: list[str] = [
+        "models.BlogIndexPage",
+        "models.ProjectIndexPage",
+        "models.ContactPage",
+    ]
 
     class Meta:
         app_label = "models"

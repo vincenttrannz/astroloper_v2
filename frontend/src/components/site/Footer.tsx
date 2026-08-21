@@ -5,7 +5,7 @@
  * settings record still produces a clean footer.
  */
 
-import { Github, Linkedin, Twitter } from "lucide-react";
+import { Facebook, Github, Linkedin, Twitter } from "lucide-react";
 
 import type { SiteChrome } from "@/lib/site-chrome";
 
@@ -22,6 +22,9 @@ export function Footer({ chrome }: { chrome: SiteChrome }) {
       : null,
     s?.twitter_url
       ? { key: "twitter", href: s.twitter_url, Icon: Twitter, label: "Twitter" }
+      : null,
+    s?.facebook_url
+      ? { key: "facebook", href: s.facebook_url, Icon: Facebook, label: "Facebook" }
       : null,
   ].filter((v): v is NonNullable<typeof v> => v !== null);
 

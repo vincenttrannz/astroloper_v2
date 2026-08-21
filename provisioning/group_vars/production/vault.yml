@@ -16,3 +16,10 @@ vault_django_superuser_email: admin@example.com
 vault_django_superuser_password: REPLACE-ME-PRODUCTION-ADMIN-PASSWORD
 
 vault_wagtail_preview_secret: REPLACE-ME-PRODUCTION-PREVIEW-SECRET
+
+# Resend API key (create under https://resend.com/api-keys).
+# Format: re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+vault_resend_api_key: REPLACE-ME-PRODUCTION-RESEND-API-KEY
+
+# Optional: bearer token for the AI agent proxy (leave blank if unused).
+vault_agent_api_key: ""

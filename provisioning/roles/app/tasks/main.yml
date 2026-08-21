@@ -48,6 +48,18 @@
     POSTGRES_USER: "{{ postgres_user }}"
     POSTGRES_PASSWORD: "{{ postgres_password }}"
     DJANGO_SETTINGS_MODULE: "{{ django_settings_module }}"
+    # SMTP relay (Resend / other transactional provider)
+    EMAIL_HOST: "{{ email_host | default('') }}"
+    EMAIL_PORT: "{{ email_port | default('') | string }}"
+    EMAIL_USE_TLS: "{{ '1' if (email_use_tls | default(false)) else '0' }}"
+    EMAIL_USE_SSL: "{{ '1' if (email_use_ssl | default(false)) else '0' }}"
+    EMAIL_HOST_USER: "{{ email_host_user | default('') }}"
+    EMAIL_HOST_PASSWORD: "{{ email_host_password | default('') }}"
+    DEFAULT_FROM_EMAIL: "{{ default_from_email | default('') }}"
+    CONTACT_TO_EMAIL: "{{ contact_to_email | default('') }}"
+    # AI agent proxy (optional; leave blank to keep /api/v2/agent/ in mock mode)
+    AGENT_URL: "{{ agent_url | default('') }}"
+    AGENT_API_KEY: "{{ agent_api_key | default('') }}"
 
 - name: Run Django migrations
   ansible.builtin.shell: |

@@ -46,6 +46,7 @@ def _serialize_settings(settings) -> dict[str, Any] | None:
         "logo": serialize_image(settings.logo),
         "favicon": serialize_image(settings.favicon),
         "twitter_url": settings.twitter_url,
+        "facebook_url": settings.facebook_url,
         "github_url": settings.github_url,
         "linkedin_url": settings.linkedin_url,
     }

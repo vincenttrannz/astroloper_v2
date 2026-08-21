@@ -5,6 +5,8 @@
 #   - default DJANGO_SETTINGS_MODULE to project.settings.dev
 #   - no host port publishing; everything reachable via Traefik on
 #     https://${SITE_HOST}
+#   - Mailpit captures every outbound email; UI at
+#     https://mailpit.${SITE_HOST}
 # =========================================================================
 
 services:
@@ -12,9 +14,14 @@ services:
     build:
       dockerfile: docker/Dockerfile.dev
     command: python manage.py runserver 0.0.0.0:8000
+    depends_on:
+      mailpit:
+        condition: service_started
     environment:
       DJANGO_SETTINGS_MODULE: project.settings.dev
       DJANGO_DEBUG: "1"
+      EMAIL_HOST: mailpit
+      EMAIL_PORT: 1025
     volumes:
       - ./backend:/app
       - backend_media:/app/media
@@ -32,3 +39,27 @@ services:
       - ./frontend:/app
       - /app/node_modules
       - /app/.next
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_DATABASE: /data/mailpit.db
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    volumes:
+      - mailpit_data:/data
+    networks:
+      - internal
+      - web
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${TRAEFIK_NETWORK:-web}
+      - traefik.http.routers.astroloper-mailpit.rule=Host(`mailpit.${SITE_HOST:-astroloper.localhost}`)
+      - traefik.http.routers.astroloper-mailpit.entrypoints=${TRAEFIK_ENTRYPOINT:-https}
+      - traefik.http.routers.astroloper-mailpit.tls=${TRAEFIK_TLS:-true}
+      - traefik.http.services.astroloper-mailpit.loadbalancer.server.port=8025
+
+volumes:
+  mailpit_data:

@@ -14,6 +14,7 @@ export type SiteSettingsPayload = {
   logo: WagtailImage | null;
   favicon: WagtailImage | null;
   twitter_url: string;
+  facebook_url: string;
   github_url: string;
   linkedin_url: string;
 };
