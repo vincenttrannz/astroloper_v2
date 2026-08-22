@@ -72,19 +72,19 @@ tasks:
   # -----------------------------------------------------------------
 
   env:
-    desc: Copy every .env.example to .env (does not overwrite existing files)
+    desc: Render .env files from group_vars + vault (default env=development; does not start the stack)
     cmds:
-      - test -f .env || cp .env.example .env
-      - test -f backend/.env || cp backend/.env.example backend/.env
-      - test -f frontend/.env || cp frontend/.env.example frontend/.env
-      - echo "Environment files ready. Review them before running task dev."
+      - task: provisioning:init
+      - task: provisioning:env
+        vars:
+          env: '{{.env | default "development"}}'
 
   # -----------------------------------------------------------------
   # Compose lifecycle (dev)
   # -----------------------------------------------------------------
 
   setup:
-    desc: One-shot local setup - env files, external network, build, migrate, create superuser
+    desc: One-shot local setup - render env from vault, external network, build, migrate, create superuser
     cmds:
       - task: env
       - task: traefik:network
@@ -106,6 +106,32 @@ tasks:
       - task: env
       - task: traefik:network
       - "{{.COMPOSE}} up -d --build"
+  
+  up:
+    desc: Start the dev stack
+    cmds:
+      - task: env
+      - task: traefik:network
+      - "{{.COMPOSE}} up"
+
+  up:d:
+    desc: Start the dev stack detached
+    cmds:
+      - task: env
+      - task: traefik:network
+      - "{{.COMPOSE}} up -d"
+
+  up:force-recreate:
+    desc: Start the dev stack with force-recreate
+    cmds:
+      - task: env
+      - task: traefik:network
+      - "{{.COMPOSE}} up --force-recreate"
+
+  restart:
+    desc: Restart the dev stack
+    cmds:
+      - "{{.COMPOSE}} restart"
 
   down:
     desc: Stop and remove dev containers (keeps volumes)

@@ -18,18 +18,21 @@
     src: env.j2
     dest: "{{ playbook_dir }}/../../.env"
     mode: "0640"
+  tags: [env]
 
 - name: Render backend/.env for the environment
   ansible.builtin.template:
     src: backend.env.j2
     dest: "{{ playbook_dir }}/../../backend/.env"
     mode: "0640"
+  tags: [env]
 
 - name: Render frontend/.env for the environment
   ansible.builtin.template:
     src: frontend.env.j2
     dest: "{{ playbook_dir }}/../../frontend/.env"
     mode: "0640"
+  tags: [env]
 
 - name: Build and start the compose stack
   ansible.builtin.shell: |
