@@ -33,5 +33,9 @@ django_superuser_password: "{{ vault_django_superuser_password }}"
 # Wagtail preview shared secret with the Next.js /api/preview route
 wagtail_preview_secret: "{{ vault_wagtail_preview_secret }}"
 
+# --- AI agent proxy (Contact page /api/v2/agent/) ---
+agent_url: "{{ vault_agent_url }}"
+agent_api_key: "{{ vault_agent_api_key }}"
+
 # Traefik
 manage_traefik_locally: false

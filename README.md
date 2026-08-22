@@ -40,6 +40,10 @@ Then open:
 
 No `/etc/hosts` edits needed: `.localhost` is RFC-reserved and browsers auto-resolve `*.localhost` to `127.0.0.1`. TLS is served by Traefik's default self-signed cert — click through the first-visit warning.
 
+## Configuration
+
+Config flows through three `.env` files in every environment: the top-level `.env` (Compose `${VAR}` interpolation — project name, Traefik labels, `POSTGRES_*`), plus `backend/.env` and `frontend/.env`, which are injected into the containers via `env_file:`. Locally, `task env` (or the `cp` commands above) produces them from the committed `*.env.example` templates; for staging/production the Ansible `app` role renders the same files from `group_vars/<env>` + vault via j2 templates. There is no inline `environment:` block in the provisioning tasks — see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#configuration-flow).
+
 ## Layout
 
 ```

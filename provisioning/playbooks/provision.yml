@@ -6,15 +6,19 @@
 #   ansible-playbook playbooks/provision.yml
 #   ansible-playbook -i inventories/staging playbooks/provision.yml
 #
-# The env-specific vars in group_vars/<env>/{vars,vault}.yml are auto-loaded
-# by Ansible because each inventory places its host(s) in a group named
-# after the environment. The top-level all.yml is loaded explicitly here.
+# The top-level all.yml plus the env-specific group_vars are loaded
+# explicitly via vars_files. (group_vars auto-discovery does NOT work for
+# ansible-playbook here because the playbook lives in playbooks/, so the
+# basedir is playbooks/ and provisioning/group_vars/<env> is never found.)
+# `target_env` is passed by the Taskfile (-e target_env=<env>).
 
 - name: Provision the astroloper stack
   hosts: all
   gather_facts: true
   vars_files:
     - ../all.yml
+    - "../group_vars/{{ target_env | default('development') }}/vars.yml"
+    - "../group_vars/{{ target_env | default('development') }}/vault.yml"
   roles:
     - role: common
     - role: docker

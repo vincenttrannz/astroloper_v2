@@ -18,17 +18,17 @@ tasks:
   provision:
     desc: Run playbooks/provision.yml against `{{.ENV}}`
     cmds:
-      - ansible-playbook -i inventories/{{.ENV}} playbooks/provision.yml {{.CLI_ARGS}}
+      - ansible-playbook -i inventories/{{.ENV}} -e target_env={{.ENV}} playbooks/provision.yml {{.CLI_ARGS}}
 
   deploy:
     desc: Run playbooks/deploy.yml against `{{.ENV}}`
     cmds:
-      - ansible-playbook -i inventories/{{.ENV}} playbooks/deploy.yml {{.CLI_ARGS}}
+      - ansible-playbook -i inventories/{{.ENV}} -e target_env={{.ENV}} playbooks/deploy.yml {{.CLI_ARGS}}
 
   rollback:
     desc: Run playbooks/rollback.yml against `{{.ENV}}`
     cmds:
-      - ansible-playbook -i inventories/{{.ENV}} playbooks/rollback.yml {{.CLI_ARGS}}
+      - ansible-playbook -i inventories/{{.ENV}} -e target_env={{.ENV}} playbooks/rollback.yml {{.CLI_ARGS}}
 
   ping:
     desc: ansible ping against `{{.ENV}}`
@@ -52,7 +52,7 @@ tasks:
   vault:encrypt:
     desc: Encrypt group_vars/{{.ENV}}/vault.yml (only run once, when the file is plaintext)
     cmds:
-      - ansible-vault encrypt --vault-id {{.ENV}}@vault_passwords/{{.ENV}} group_vars/{{.ENV}}/vault.yml
+      - ansible-vault encrypt --vault-id {{.ENV}}@vault_passwords/{{.ENV}} --encrypt-vault-id {{.ENV}} group_vars/{{.ENV}}/vault.yml
 
   vault:decrypt:
     desc: Decrypt group_vars/{{.ENV}}/vault.yml back to plaintext (dangerous, avoid committing plaintext!)

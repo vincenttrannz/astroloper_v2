@@ -40,7 +40,7 @@ contact_to_email: "hello@{{ domain }}"
 
 # --- AI agent proxy (Contact page /api/v2/agent/) ---
 # Leave blank to keep the endpoint returning mock replies.
-agent_url: ""
-agent_api_key: "{{ vault_agent_api_key | default('') }}"
+agent_url: "{{ vault_agent_url }}"
+agent_api_key: "{{ vault_agent_api_key }}"
 
 manage_traefik_locally: false

@@ -9,28 +9,27 @@
   when: env_name != 'development'
   become: true
 
+# Render the per-environment .env files. Compose reads the top-level .env for
+# ${VAR} interpolation and injects backend/.env + frontend/.env into the
+# containers via each service's `env_file:`. This is the single config path for
+# every environment (no inline `environment:` block below).
 - name: Render top-level .env for the environment
   ansible.builtin.template:
     src: env.j2
     dest: "{{ playbook_dir }}/../../.env"
     mode: "0640"
-  vars:
-    _target_env_path: "{{ playbook_dir }}/../../.env"
-  when: env_name == 'development'
 
 - name: Render backend/.env for the environment
   ansible.builtin.template:
     src: backend.env.j2
     dest: "{{ playbook_dir }}/../../backend/.env"
     mode: "0640"
-  when: env_name == 'development'
 
 - name: Render frontend/.env for the environment
   ansible.builtin.template:
     src: frontend.env.j2
     dest: "{{ playbook_dir }}/../../frontend/.env"
     mode: "0640"
-  when: env_name == 'development'
 
 - name: Build and start the compose stack
   ansible.builtin.shell: |
@@ -40,26 +39,6 @@
   args:
     chdir: "{{ playbook_dir }}/../.."
     executable: /bin/bash
-  environment:
-    SITE_HOST: "{{ domain }}"
-    SITE_URL: "{{ site_url }}"
-    TRAEFIK_NETWORK: "{{ traefik_network }}"
-    POSTGRES_DB: "{{ postgres_db }}"
-    POSTGRES_USER: "{{ postgres_user }}"
-    POSTGRES_PASSWORD: "{{ postgres_password }}"
-    DJANGO_SETTINGS_MODULE: "{{ django_settings_module }}"
-    # SMTP relay (Resend / other transactional provider)
-    EMAIL_HOST: "{{ email_host | default('') }}"
-    EMAIL_PORT: "{{ email_port | default('') | string }}"
-    EMAIL_USE_TLS: "{{ '1' if (email_use_tls | default(false)) else '0' }}"
-    EMAIL_USE_SSL: "{{ '1' if (email_use_ssl | default(false)) else '0' }}"
-    EMAIL_HOST_USER: "{{ email_host_user | default('') }}"
-    EMAIL_HOST_PASSWORD: "{{ email_host_password | default('') }}"
-    DEFAULT_FROM_EMAIL: "{{ default_from_email | default('') }}"
-    CONTACT_TO_EMAIL: "{{ contact_to_email | default('') }}"
-    # AI agent proxy (optional; leave blank to keep /api/v2/agent/ in mock mode)
-    AGENT_URL: "{{ agent_url | default('') }}"
-    AGENT_API_KEY: "{{ agent_api_key | default('') }}"
 
 - name: Run Django migrations
   ansible.builtin.shell: |

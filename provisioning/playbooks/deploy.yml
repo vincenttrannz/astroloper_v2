@@ -10,6 +10,13 @@
   gather_facts: true
   vars_files:
     - ../all.yml
+    # Env-specific vars/vault. group_vars auto-discovery only works for
+    # ad-hoc / ansible-inventory runs (they use the CWD as basedir); for
+    # ansible-playbook the basedir is the playbook dir, so group_vars/<env>
+    # is never found. Load it explicitly. `target_env` is passed by the
+    # Taskfile (-e target_env=<env>) and defaults to development.
+    - "../group_vars/{{ target_env | default('development') }}/vars.yml"
+    - "../group_vars/{{ target_env | default('development') }}/vault.yml"
   tasks:
     - name: Ensure the external Traefik network `{{ traefik_network }}` exists
       ansible.builtin.command: docker network inspect {{ traefik_network }}

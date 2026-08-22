@@ -12,6 +12,8 @@
   gather_facts: true
   vars_files:
     - ../all.yml
+    - "../group_vars/{{ target_env | default('development') }}/vars.yml"
+    - "../group_vars/{{ target_env | default('development') }}/vault.yml"
   tasks:
     - name: Show target tags
       ansible.builtin.debug:

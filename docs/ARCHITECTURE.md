@@ -94,4 +94,8 @@ Same Docker images across environments; only compose overrides and Ansible varia
 | staging      | `docker-compose.staging.yml`     | `project.settings.staging`   | `staging.example.com` (TODO)     |
 | production   | `docker-compose.prod.yml`        | `project.settings.production`| `example.com` (TODO)             |
 
+### Configuration
+
+Config is delivered identically in every environment: `group_vars/<env>` (vars + vault) → j2 templates in the Ansible `app` role → three rendered `.env` files. The top-level `.env` is Compose `${VAR}` interpolation only (labels, network, `POSTGRES_*`); `backend/.env` and `frontend/.env` are injected into the containers via each service's `env_file:` (`required: false`). Per-env `docker-compose.<env>.yml` `environment:` entries override the `env_file` values where needed. Locally, `task env` produces the same files from the committed `*.env.example` templates. See [DEPLOYMENT.md](DEPLOYMENT.md#configuration-flow) for the full picture.
+
 See [DEPLOYMENT.md](DEPLOYMENT.md) for the Traefik + provisioning story.

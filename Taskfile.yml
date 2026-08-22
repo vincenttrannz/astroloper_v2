@@ -96,12 +96,14 @@ tasks:
   dev:
     desc: Start the dev stack (db, redis, backend, frontend) attached
     cmds:
+      - task: env
       - task: traefik:network
       - "{{.COMPOSE}} up --build"
 
   dev:d:
     desc: Start the dev stack detached
     cmds:
+      - task: env
       - task: traefik:network
       - "{{.COMPOSE}} up -d --build"
 

@@ -87,6 +87,25 @@ Then browse:
 
 `.localhost` is RFC-reserved: browsers auto-resolve `*.localhost` to `127.0.0.1`, so no `/etc/hosts` edit is required. First visit shows a browser TLS warning (Traefik default self-signed cert); accept it once.
 
+## Configuration flow
+
+Every environment gets its config the same way — there is a single path, no inline `environment:` block in the Ansible tasks:
+
+```
+group_vars/<env>/vars.yml + vault.yml   (secrets + settings)
+        │  (Ansible app role renders j2 templates)
+        ▼
+.env            ← env.j2          (Compose ${VAR} interpolation only)
+backend/.env    ← backend.env.j2  ─┐ injected into the containers
+frontend/.env   ← frontend.env.j2 ─┘ via each service's `env_file:`
+```
+
+- **Top-level `.env`** is read by Docker Compose for `${VAR}` interpolation only: project name, router labels (`SITE_HOST`, `TRAEFIK_NETWORK`, `TRAEFIK_ENTRYPOINT`, `TRAEFIK_TLS`), and the `POSTGRES_*` used to build `DATABASE_URL`.
+- **`backend/.env` / `frontend/.env`** carry app runtime config and are injected via `env_file:` (`required: false`, so a missing file never hard-fails).
+- `DATABASE_URL` / `REDIS_URL` stay as Compose `environment:` interpolation so the DB connection never depends on `backend/.env` existing.
+- Per-environment `docker-compose.<env>.yml` `environment:` entries intentionally win over `env_file:` (Compose precedence) — e.g. dev forces `EMAIL_HOST=mailpit` and `DJANGO_SETTINGS_MODULE=project.settings.dev`.
+- For local `task dev` (no Ansible), the same files are produced by `task env` copying the committed `*.env.example` templates; `settings/base.py` env defaults are the final fallback.
+
 ## Provisioning (Ansible)
 
 The provisioning layer lives in [`provisioning/`](../provisioning). It's currently wired for `local_only`: the development inventory targets `localhost` with `ansible_connection: local`; staging/production inventories are stubs waiting for real hosts.
@@ -128,7 +147,7 @@ task provisioning:rollback  -- env=development
 ```
 
 - `provision.yml` installs Docker, creates the `web` network, and (optionally) starts Traefik.
-- `deploy.yml` syncs compose + env files, builds images, runs migrations, brings services up.
+- `deploy.yml` renders the three `.env` files (`.env`, `backend/.env`, `frontend/.env`) from the j2 templates, builds images, runs migrations, and brings services up. All app config flows through those rendered files — there is no inline `environment:` block.
 - `rollback.yml` re-deploys the previous image tags.
 
 ## Moving to a real server

@@ -63,26 +63,18 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # App runtime config comes from backend/.env (rendered per-environment by
+    # the Ansible app role, or copied from backend/.env.example via `task env`
+    # locally). required:false so a missing file never hard-fails; settings/
+    # base.py defaults are the final fallback. DATABASE_URL / REDIS_URL are
+    # built here via interpolation from the top-level .env POSTGRES_* so the
+    # DB connection never depends on backend/.env existing.
+    env_file:
+      - path: ./backend/.env
+        required: false
     environment:
-      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-project.settings.production}
       DATABASE_URL: postgres://${POSTGRES_USER:-astroloper}:${POSTGRES_PASSWORD:-astroloper}@db:5432/${POSTGRES_DB:-astroloper}
       REDIS_URL: redis://redis:6379/0
-      SITE_HOST: ${SITE_HOST:-astroloper.localhost}
-      SITE_URL: ${SITE_URL:-https://astroloper.localhost}
-      # SMTP transport (see base.py). Dev override sets EMAIL_HOST=mailpit;
-      # staging/prod Ansible task exports Resend / real relay values.
-      # Defaults here mirror the ones in base.py so an empty host env
-      # doesn't overwrite them with empty strings.
-      EMAIL_HOST: ${EMAIL_HOST:-mailpit}
-      EMAIL_PORT: ${EMAIL_PORT:-1025}
-      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-0}
-      EMAIL_USE_SSL: ${EMAIL_USE_SSL:-0}
-      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
-      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
-      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-no-reply@astroloper.localhost}
-      CONTACT_TO_EMAIL: ${CONTACT_TO_EMAIL:-hello@astroloper.localhost}
-      AGENT_URL: ${AGENT_URL:-}
-      AGENT_API_KEY: ${AGENT_API_KEY:-}
     volumes:
       - backend_media:/app/media
       - backend_static:/app/static_collected
@@ -105,10 +97,14 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
+    # Frontend runtime config (WAGTAIL_API_URL, NEXT_PUBLIC_SITE_URL,
+    # WAGTAIL_PREVIEW_SECRET) comes from frontend/.env; env-specific overrides
+    # (NODE_ENV, and the dev API/site URLs) live in the per-env compose files.
+    env_file:
+      - path: ./frontend/.env
+        required: false
     environment:
       NODE_ENV: production
-      WAGTAIL_API_URL: http://backend:8000
-      NEXT_PUBLIC_SITE_URL: ${SITE_URL:-https://astroloper.localhost}
     networks:
       - internal
       - web
