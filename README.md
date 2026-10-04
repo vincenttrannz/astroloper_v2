@@ -16,18 +16,20 @@ Personal headless CMS built on Wagtail (Django) + Next.js, orchestrated with Doc
 Prerequisites:
 - Docker Desktop (or Docker Engine + compose plugin)
 - [Task](https://taskfile.dev/installation/) (`brew install go-task/tap/go-task`)
+- [Ansible](https://docs.ansible.com/) (`brew install ansible`) — required; it renders `.env` files from the vault
 - A running Traefik container that owns the external `web` Docker network with a TLS-terminating entrypoint on port 443 (see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 - Optional: [uv](https://docs.astral.sh/uv/) and Node.js 22 with npm if you want to run backend/frontend outside Docker.
 
+Secrets live in `provisioning/group_vars/<env>/vault.yml` (ansible-vault encrypted). Do not copy or hand-edit `.env` files — they are generated artifacts.
+
 ```bash
-cp .env.example .env
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
+# One-time: create gitignored vault password files (edit them to match how the vault was encrypted).
+task provisioning:init
 
-# Match TRAEFIK_ENTRYPOINT in .env to whatever your Traefik calls it.
-# (default assumes an entrypoint named `https` on port 443)
+# Optional: change secrets (postgres password, django secret, admin user, …).
+task provisioning:vault:edit -- env=development
 
-task setup              # creates the external `web` network, builds images, migrates, creates admin
+task setup              # renders .env from the vault, creates `web` network, builds, migrates, creates admin
 task dev                # brings up db, redis, backend, frontend behind Traefik
 ```
 
@@ -42,7 +44,12 @@ No `/etc/hosts` edits needed: `.localhost` is RFC-reserved and browsers auto-res
 
 ## Configuration
 
-Config flows through three `.env` files in every environment: the top-level `.env` (Compose `${VAR}` interpolation — project name, Traefik labels, `POSTGRES_*`), plus `backend/.env` and `frontend/.env`, which are injected into the containers via `env_file:`. Locally, `task env` (or the `cp` commands above) produces them from the committed `*.env.example` templates; for staging/production the Ansible `app` role renders the same files from `group_vars/<env>` + vault via j2 templates. There is no inline `environment:` block in the provisioning tasks — see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#configuration-flow).
+**Source of truth** is `provisioning/group_vars/<env>/`: encrypted `vault.yml` for secrets, `vars.yml` for non-secrets. `task env` (and `task setup` / `task provisioning:deploy`) renders those through j2 templates into three gitignored `.env` files. Never edit the `.env` files by hand — change the vault or vars and re-render.
+
+- Top-level `.env` — Compose `${VAR}` interpolation only (project name, Traefik labels, `POSTGRES_*`).
+- `backend/.env` / `frontend/.env` — injected into the containers via `env_file:`.
+
+Postgres only applies `POSTGRES_PASSWORD` when it first initializes an empty data volume. If you change `vault_postgres_password`, run `task reset` before bringing the stack up again, or the backend will fail with `password authentication failed`. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#configuration-flow).
 
 ## Layout
 
@@ -72,6 +79,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full architecture and [
 
 ```bash
 task                          # list all tasks
+task env                      # render .env files from the development vault
 task dev                      # start dev stack
 task backend:migrate          # run django migrations
 task backend:makemigrations   # generate new migrations
@@ -85,7 +93,7 @@ task provisioning:vault:edit -- env=development
 
 ## Traefik entrypoint / TLS knobs
 
-Both are controlled from `.env`:
+These land in the rendered top-level `.env`. Change them in `provisioning/all.yml` / `group_vars/<env>/vars.yml`, then `task env` — do not edit `.env` directly.
 
 | Variable             | Default   | Notes                                                                                    |
 | -------------------- | --------- | ---------------------------------------------------------------------------------------- |
@@ -93,4 +101,4 @@ Both are controlled from `.env`:
 | `TRAEFIK_ENTRYPOINT` | `https`   | Must match a name declared in your Traefik command flags.                                |
 | `TRAEFIK_TLS`        | `true`    | Set to `false` if your entrypoint is plain HTTP (also flip every `SITE_URL` to `http://`). |
 
-If your Traefik uses `web`/`websecure` or `http`/`https` — set `TRAEFIK_ENTRYPOINT` accordingly and you're done.
+If your Traefik uses `web`/`websecure` or `http`/`https` — set `traefik_entrypoint` in group_vars accordingly and re-render.

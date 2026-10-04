@@ -66,6 +66,15 @@ tasks:
       - ansible-vault rekey --vault-id {{.ENV}}@vault_passwords/{{.ENV}} group_vars/{{.ENV}}/vault.yml
 
   # -----------------------------------------------------------------
+  # Env files (rendered from group_vars + vault; never hand-copied)
+  # -----------------------------------------------------------------
+
+  env:
+    desc: Render .env, backend/.env, frontend/.env from group_vars/{{.ENV}} + vault (does not start the stack)
+    cmds:
+      - ansible-playbook -i inventories/{{.ENV}} -e target_env={{.ENV}} playbooks/deploy.yml --tags env {{.CLI_ARGS}}
+
+  # -----------------------------------------------------------------
   # Setup helpers
   # -----------------------------------------------------------------
 

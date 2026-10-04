@@ -13,7 +13,6 @@ static_collected/
 *.log
 .env
 .env.*
-!.env.example
 .git/
 .gitignore
 Dockerfile*

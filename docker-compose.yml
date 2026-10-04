@@ -63,12 +63,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    # App runtime config comes from backend/.env (rendered per-environment by
-    # the Ansible app role, or copied from backend/.env.example via `task env`
-    # locally). required:false so a missing file never hard-fails; settings/
-    # base.py defaults are the final fallback. DATABASE_URL / REDIS_URL are
-    # built here via interpolation from the top-level .env POSTGRES_* so the
-    # DB connection never depends on backend/.env existing.
+    # App runtime config comes from backend/.env, rendered from
+    # group_vars/<env>/{vars,vault}.yml by the Ansible app role (`task env`).
+    # required:false so a missing file never hard-fails; settings/base.py
+    # defaults are the final fallback. DATABASE_URL / REDIS_URL are built
+    # here via interpolation from the top-level .env POSTGRES_* so the DB
+    # connection never depends on backend/.env existing.
     env_file:
       - path: ./backend/.env
         required: false
@@ -98,8 +98,9 @@ services:
     depends_on:
       - backend
     # Frontend runtime config (WAGTAIL_API_URL, NEXT_PUBLIC_SITE_URL,
-    # WAGTAIL_PREVIEW_SECRET) comes from frontend/.env; env-specific overrides
-    # (NODE_ENV, and the dev API/site URLs) live in the per-env compose files.
+    # WAGTAIL_PREVIEW_SECRET) comes from frontend/.env, rendered from
+    # group_vars by `task env`. Per-env compose `environment:` entries
+    # (NODE_ENV, and the dev API/site URLs) override those values.
     env_file:
       - path: ./frontend/.env
         required: false

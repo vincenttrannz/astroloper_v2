@@ -6,13 +6,13 @@
 
 - Docker Desktop or Docker Engine + compose plugin
 - [Task](https://taskfile.dev/installation/): `brew install go-task/tap/go-task`
-- (Optional) [Ansible](https://docs.ansible.com/) if you want to use the provisioning playbooks locally
+- [Ansible](https://docs.ansible.com/): `brew install ansible` (required — it renders `.env` files from the vault)
 
 ### 2. Traefik (runs outside this project)
 
 This repo assumes a standalone Traefik container is already running and owns the external Docker network `web`, with a TLS-terminating entrypoint on port 443.
 
-Match the two knobs in `.env` to whatever your Traefik calls things:
+Match the Traefik knobs in `provisioning/all.yml` / `group_vars/<env>/vars.yml` (rendered into `.env`) to whatever your Traefik calls things:
 
 | `.env` key             | What it means                                                                          |
 | ---------------------- | -------------------------------------------------------------------------------------- |
@@ -75,8 +75,9 @@ The Traefik dashboard is at <http://localhost:8080/>. This stack lives on its ow
 From this repo:
 
 ```bash
-task setup           # env files, ensure `web` network exists, build, migrate, superuser
-task dev             # up
+task provisioning:init   # one-time: create vault password files
+task setup               # render .env from the vault, ensure `web` network exists, build, migrate, superuser
+task dev                 # up
 ```
 
 Then browse:
@@ -89,10 +90,11 @@ Then browse:
 
 ## Configuration flow
 
-Every environment gets its config the same way — there is a single path, no inline `environment:` block in the Ansible tasks:
+Every environment gets its config the same way — there is a single path. Encrypted `vault.yml` holds secrets; `vars.yml` holds non-secrets. The three `.env` files are generated artifacts (gitignored). Do not copy templates or edit them by hand.
 
 ```
-group_vars/<env>/vars.yml + vault.yml   (secrets + settings)
+group_vars/<env>/vars.yml + vault.yml   (source of truth)
+        │  task env  /  task provisioning:deploy
         │  (Ansible app role renders j2 templates)
         ▼
 .env            ← env.j2          (Compose ${VAR} interpolation only)
@@ -104,7 +106,8 @@ frontend/.env   ← frontend.env.j2 ─┘ via each service's `env_file:`
 - **`backend/.env` / `frontend/.env`** carry app runtime config and are injected via `env_file:` (`required: false`, so a missing file never hard-fails).
 - `DATABASE_URL` / `REDIS_URL` stay as Compose `environment:` interpolation so the DB connection never depends on `backend/.env` existing.
 - Per-environment `docker-compose.<env>.yml` `environment:` entries intentionally win over `env_file:` (Compose precedence) — e.g. dev forces `EMAIL_HOST=mailpit` and `DJANGO_SETTINGS_MODULE=project.settings.dev`.
-- For local `task dev` (no Ansible), the same files are produced by `task env` copying the committed `*.env.example` templates; `settings/base.py` env defaults are the final fallback.
+- `settings/base.py` env defaults are the final fallback if a key is absent from the rendered files.
+- Postgres applies `POSTGRES_PASSWORD` only when initializing an empty volume. Changing `vault_postgres_password` against an existing volume requires `task reset` (or an `ALTER ROLE`) — otherwise Django fails with `password authentication failed`.
 
 ## Provisioning (Ansible)
 
@@ -141,13 +144,15 @@ task provisioning:vault:view -- env=production
 ### Playbooks
 
 ```bash
+task provisioning:env       -- env=development   # render .env files only
 task provisioning:provision -- env=development
 task provisioning:deploy    -- env=development
 task provisioning:rollback  -- env=development
 ```
 
+- `env` (also `task env` from the repo root) renders `.env`, `backend/.env`, and `frontend/.env` from group_vars + vault without starting the stack.
 - `provision.yml` installs Docker, creates the `web` network, and (optionally) starts Traefik.
-- `deploy.yml` renders the three `.env` files (`.env`, `backend/.env`, `frontend/.env`) from the j2 templates, builds images, runs migrations, and brings services up. All app config flows through those rendered files — there is no inline `environment:` block.
+- `deploy.yml` renders the three `.env` files, builds images, runs migrations, and brings services up. All app config flows through those rendered files — there is no inline `environment:` block.
 - `rollback.yml` re-deploys the previous image tags.
 
 ## Moving to a real server
@@ -155,9 +160,9 @@ task provisioning:rollback  -- env=development
 When you're ready to point staging/production at real hosts:
 
 1. Edit `provisioning/inventories/<env>/hosts.yml` with the target IP and SSH user.
-2. Set the real domain in `provisioning/group_vars/<env>/vars.yml`.
-3. Move the SITE_HOST / SITE_URL values from `.env` into the group_vars.
+2. Set the real domain (and any other non-secrets) in `provisioning/group_vars/<env>/vars.yml`.
+3. Set secrets in `provisioning/group_vars/<env>/vault.yml` (`task provisioning:vault:edit -- env=<env>`).
 4. Ensure the target host has Docker installed (or run `task provisioning:provision -- env=<env>` once).
-5. Deploy with `task provisioning:deploy -- env=<env>`.
+5. Deploy with `task provisioning:deploy -- env=<env>` (this renders `.env` files from the vault, then starts the stack).
 
 Media uploads currently live on a local Docker volume. When you need S3 (or any object storage), add `django-storages` to the backend deps, set `DEFAULT_FILE_STORAGE` in `project/settings/production.py`, and point Wagtail at the bucket. The volume mount in `docker-compose.yml` becomes redundant at that point.
